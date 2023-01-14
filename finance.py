@@ -1,7 +1,6 @@
 import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
-import plotly.express as px
 import datetime as dt
 
 
@@ -12,8 +11,10 @@ while True:
     ticker = ''.join(e for e in ticker if e.isalnum())
     time_period = input("See history of the stock: 1d, 5d, 1mo, 3mo, 6mo, ytd, max: ")
     time_period = ''.join(e for e in time_period if e.isalnum())
-    if time_period.lower() in ("1d 5d"): 
+    if time_period.lower() == "1d": 
         time_interval ='1m'
+    elif time_period == '5d':
+        time_interval = '15m'
     elif time_period.lower() in "1mo 3mo":
         time_interval ='1h'
     else: 
@@ -42,47 +43,73 @@ change_prcnt = round(((last_v - open_v) / open_v) * 100, 2)
 highest = stock_df.loc[stock_df['High'].idxmax()]
 lowest = stock_df.loc[stock_df['Low'].idxmin()]
 
-#Change from px.line to go.scatter so that rangebreaks will work! or this is only for 1d graph and everything else gets something different
-#Could we graph by index on x axis then change the index number to date?
-line_fig = px.line(stock_df, 
-                x=stock_df['Datetime'], 
-                y=stock_df['High'], 
-                labels={'Datetime': 'Date and Time', 'High': 'USD$'},
-                title= f"{ticker.upper()} High Report <br> {change_prcnt}%")
-line_fig.update_traces(line_color=line_fig_color)
-if time_period.lower() in ("1d 5d"): 
-    line_fig.add_hline(y=open_v, line_dash='dash', annotation_text=f"Opening price <br> {round(open_v, 3)}")
-line_fig.add_annotation(x= highest.at['Datetime'], y=highest.at['High'], 
-                    text= round(highest.at['High'], 3),
-                    showarrow=True)
+
+line_fig = go.Figure()
+line_fig.add_trace(go.Scatter(
+    x= stock_df['Datetime'], 
+    y= stock_df['High'],
+    mode= 'lines',
+    name= 'USD',
+    marker= {'color': line_fig_color}))
+line_fig.update_xaxes(
+    rangebreaks=[
+        { 'pattern': 'day of week', 'bounds': [6, 1]},
+        { 'pattern': 'hour', 'bounds':[16,9.5]}
+    ]
+)
+line_fig.update_layout(
+    title= f"{ticker.upper()} High Report <br> {change_prcnt}%",
+    xaxis_title= "Date and Time",
+    yaxis_title= "USD$"
+)
+line_fig.add_hline(y=open_v, line_dash='dash', annotation_text=f"Opening price <br> {round(open_v, 3)}")
+line_fig.add_annotation(
+    x= highest.at['Datetime'], 
+    y=highest.at['High'], 
+    text= round(highest.at['High'], 3),
+    showarrow=True)
+#Line from lowest to highest point
+line_fig.add_trace(go.Scatter(
+    x= [lowest.at['Datetime'], highest.at['Datetime']], 
+    y= [lowest.at['Low'], highest.at['High']],
+    name=f"Change: ${round(highest.at['High'] - lowest.at['High'], 2)}<br>({round(((lowest.at['High'] - highest.at['High']) / highest.at['High']) * 100 , 2)})%"))
 line_fig.show()
 
 
-
-candle_fig = go.Figure(data=[go.Candlestick(x=stock_df['Datetime'],
-                open=stock_df['Open'],
-                high=stock_df['High'],
-                low=stock_df['Low'],
-                close=stock_df['Close'], 
-                line=dict(width=1))])
+candle_fig = go.Figure(data=[go.Candlestick(
+    x=stock_df['Datetime'],
+    open=stock_df['Open'],
+    high=stock_df['High'],
+    low=stock_df['Low'],
+    close=stock_df['Close'], 
+    line=dict(width=1))])
 candle_fig.update_xaxes(
     rangebreaks=[
         { 'pattern': 'day of week', 'bounds': [6, 1]},
         { 'pattern': 'hour', 'bounds':[16,9.5]}
     ]
 )
+candle_fig.add_trace(go.Scatter(
+    x= stock_df['Datetime'], 
+    y= stock_df['High'],
+    mode= 'lines',
+    name= 'USD',
+    marker= {'color': line_fig_color}))
 candle_fig.update_layout(
     title= f"{ticker.upper()} Report <br> {change_prcnt}%",
     yaxis_title= 'USD$',
     xaxis_title= 'Date and Time'
 )
-if time_period.lower() in ("1d 5d"): 
-    candle_fig.add_hline(y=open_v, line_dash='dash', annotation_text=f"Opening price <br> {round(open_v, 3)}")
+candle_fig.add_hline(y=open_v, line_dash='dash', annotation_text=f"Opening price <br> {round(open_v, 3)}")
 candle_fig.add_annotation(x= highest.at['Datetime'], y=highest.at['High'], 
-                    text= round(highest.at['High'], 3),
-                    showarrow=True)
+    text= round(highest.at['High'], 3),
+    showarrow=True)
 candle_fig.add_annotation(x= lowest.at['Datetime'], y= lowest.at['Low'], 
-                    text= round(lowest.at['Low'], 3),
-                    showarrow=True,
-                    )
+    text= round(lowest.at['Low'], 3),
+    showarrow=True,)
+#Line from lowest to highest point
+candle_fig.add_trace(go.Scatter(
+    x= [lowest.at['Datetime'], highest.at['Datetime']], 
+    y= [lowest.at['Low'], highest.at['High']],
+    name=f"Change: ${round(highest.at['High'] - lowest.at['High'], 2)}<br>({round(((lowest.at['High'] - highest.at['High']) / highest.at['High']) * 100 , 2)})%"))
 candle_fig.show()
