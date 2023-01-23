@@ -1,5 +1,6 @@
 import pandas as pd
 import yfinance as yf
+import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -10,6 +11,7 @@ while True:
     ticker_list = tickers.split()
     time_period = input("See history of the stock: 1d, 5d, 1mo, 3mo, 6mo, ytd, 2y, 5y, max: ")
     time_period = ''.join(e for e in time_period if e.isalnum())
+    smal_roll= 30
     if time_period.lower() == "1d": 
         time_interval ='1m'
     elif time_period == '5d':
@@ -24,7 +26,7 @@ while True:
         continue
 
 
-change_df = pd.DataFrame
+change_df = pd.DataFrame(columns= ["ticker", "start_date", "end_date", "percent_change"])
 for ticker in ticker_list:
     print(ticker)
     stock_df = yf.download(tickers= ticker, period= time_period, interval= time_interval)
@@ -48,18 +50,7 @@ for ticker in ticker_list:
 
     #Simple Moving Average
     stock_df['sma_s'] = stock_df['Close'].rolling(5).mean()
-    #stock_df.dropna(inplace=True)
-    stock_df['sma_l'] = stock_df['Close'].rolling(100).mean()
-    #stock_df.dropna(inplace=True)
-
-
-    #Change so ticker= can add columns for n amount of iterations of this for variable
-    if change_df.empty:
-        change_df= stock_df['Datetime'].copy()
-        change_df = pd.DataFrame(change_df)
-    ticker_change= stock_df['High'].pct_change().tolist()
-    ticker_change[0] = 0
-    change_df[ticker]= ticker_change
+    stock_df['sma_l'] = stock_df['Close'].rolling(smal_roll).mean()
 
 
     candlestick = go.Candlestick(
@@ -139,3 +130,13 @@ for ticker in ticker_list:
         showarrow=True,
         secondary_y=False)
     candle_fig.show()
+
+
+    change_lst = pd.DataFrame([{'ticker': ticker, 'start_date': stock_df['Datetime'].iloc[0], 'end_date': stock_df['Datetime'].iloc[-1], 'percent_change': change_prcnt}])
+    change_df = pd.concat([change_df, change_lst])
+
+
+change_df['color']= np.where(change_df["percent_change"]<0, 'red', 'green')
+print(change_df)
+bar_fig = go.Figure(go.Bar(x= change_df['ticker'], y= change_df['percent_change'], marker_color=change_df['color']))
+bar_fig.show()
