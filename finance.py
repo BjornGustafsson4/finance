@@ -28,8 +28,7 @@ while True:
 
 change_df = pd.DataFrame(columns= ["ticker", "start_date", "end_date", "percent_change"])
 for ticker in ticker_list:
-    print(ticker)
-    stock_df = yf.download(tickers= ticker, period= time_period, interval= time_interval)
+    stock_df= yf.download(tickers= ticker, period= time_period, interval= time_interval)
     stock_df.reset_index(inplace= True)
     if 'Date' in stock_df.columns:
         stock_df= stock_df.rename(columns={'Date':'Datetime'})
@@ -130,13 +129,65 @@ for ticker in ticker_list:
         showarrow=True,
         secondary_y=False)
     candle_fig.show()
+    stock_df.to_csv(f"stock_{ticker}_df.csv")
 
 
-    change_lst = pd.DataFrame([{'ticker': ticker, 'start_date': stock_df['Datetime'].iloc[0], 'end_date': stock_df['Datetime'].iloc[-1], 'percent_change': change_prcnt}])
-    change_df = pd.concat([change_df, change_lst])
+    if len(ticker_list) >= 2:
+        tick_info = yf.Ticker(ticker).info
+        change_lst = pd.DataFrame([{'ticker': ticker, 'start_date': stock_df['Datetime'].iloc[0], 'end_date': stock_df['Datetime'].iloc[-1], 'percent_change': change_prcnt, 'close_price':round(stock_df['Close'].iloc[-1], 2), 'revenue_per_share':tick_info['revenuePerShare'], 'bv': tick_info['bookValue'], 'pe_ratio':tick_info['trailingEps']}])
+        change_df = pd.concat([change_df, change_lst])
 
 
-change_df['color']= np.where(change_df["percent_change"]<0, 'red', 'green')
-print(change_df)
-bar_fig = go.Figure(go.Bar(x= change_df['ticker'], y= change_df['percent_change'], marker_color=change_df['color']))
-bar_fig.show()
+
+#Add new stuff here for stock comparison
+if len(ticker_list) >= 2:
+    change_df['color_prcnt']= np.where(change_df["percent_change"]<0, 'red', 'green')
+    print(change_df)
+
+    ticker_names= ""
+    for tick in ticker_list:
+        ticker_names += f" {tick}"
+    print(ticker_names)
+    bars_fig = make_subplots(rows=2, cols=2, 
+        subplot_titles=("Percent change ", "Closing price", "P/E Ratio", "Book Value"))
+
+    bars_fig.add_trace(go.Bar(
+        x= change_df['ticker'],
+        y= change_df['percent_change'], 
+        marker_color= change_df['color_prcnt'],
+        text= change_df['percent_change']),
+        row= 1, col= 1)
+    
+    bars_fig.add_trace(go.Bar(
+        x= change_df['ticker'],
+        y= change_df['close_price'],
+        text= change_df['close_price']),
+        row= 1, col= 2)
+
+    bars_fig.add_trace(go.Bar(
+        x= change_df['ticker'],
+        y= change_df['pe_ratio'], 
+        text= change_df['pe_ratio']),
+        row= 2, col= 1)
+
+    bars_fig.add_trace(go.Bar(
+        x= change_df['ticker'],
+        y= change_df['bv'], 
+        text= change_df['bv']),
+        row= 2, col= 2)
+
+    bars_fig.update_yaxes(ticksuffix="%", row=1, col=1)
+    bars_fig.update_yaxes(tickprefix="$", row=1, col=2)
+    bars_fig.update_yaxes(tickprefix="$", row=2, col=2)
+
+    pe_mean = round(change_df['pe_ratio'].mean(), 2)
+    bars_fig.add_hline(
+        y= pe_mean, 
+        line_dash='dash', 
+        annotation_text=pe_mean,
+        row=2, col=1)
+
+    bars_fig.update_layout(title_text=f"{ticker_names} stock comparison over {time_period}")
+    bars_fig.update_layout(showlegend=False)
+    bars_fig.show()
+    change_df.to_csv("stock_change.csv")
