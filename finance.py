@@ -56,7 +56,6 @@ for ticker in ticker_list:
     else:
         filename= f"{cwd}\\{ticker}.csv"
         stock_df= pd.read_csv(filename)
-        print(stock_df)
 
 
     open_v = stock_df['Open'].iloc[0] #Change to first instance of today open, NOT first instance in data (this way we can see historical data vs today)
@@ -161,10 +160,26 @@ for ticker in ticker_list:
     if len(ticker_list) >= 2 and csv_only == False:
         tick_info = yf.Ticker(ticker).info
         pd.DataFrame(tick_info).to_csv("temp_for_error.csv")
-        change_lst = pd.DataFrame([{'ticker': ticker, 'start_date': stock_df['Datetime'].iloc[0], 'end_date': stock_df['Datetime'].iloc[-1], 'percent_change': change_prcnt, 'close_price':round(stock_df['Close'].iloc[-1], 2), 'revenue_per_share':tick_info['revenuePerShare'], 'de': round(tick_info['debtToEquity'], 2), 'pe_ratio':round(tick_info['trailingPE'], 2), 'bv': round(tick_info['bookValue'], 2), 'roe': (round(tick_info['returnOnEquity'], 2) * 100)}])
+        change_lst = pd.DataFrame([{
+            'ticker': ticker, 
+            'percent_change': change_prcnt, 
+            'close_price':round(stock_df['Close'].iloc[-1], 2), 
+            'revenue_per_share':tick_info['revenuePerShare'], 
+            'de': round(tick_info['debtToEquity']/100, 2), 
+            'pe_ratio':round(tick_info['trailingPE'], 2), 
+            'ps': round(tick_info['priceToSalesTrailing12Months'], 2), 
+            'roe': (round(tick_info['returnOnEquity'], 2) * 100)}])
         change_df = pd.concat([change_df, change_lst])
         change_df['color_prcnt']= np.where(change_df["percent_change"]<0, 'red', 'green')
+        #change_df['color_doe']= np.where(change_df["de"]<)
         change_df.to_csv(f"{graph_cwd_timestamp}\\change.csv")
+
+
+if time_period != '1d':
+    title_str = f"from {str(stock_df['Datetime'].iloc[0]).split(' ', 1)[0]} to {str(stock_df['Datetime'].iloc[-1]).split(' ', 1)[0]}"
+else:
+    title_str = f"on {str(stock_df['Datetime'].iloc[0]).split(' ', 1)[0]} from {str(stock_df['Datetime'].iloc[0]).split(' ', 1)[1].split('-')[0]} to {str(stock_df['Datetime'].iloc[-1]).split(' ', 1)[1].split('-')[0]}"
+print(title_str)
 
 
 #Add new stuff here for stock comparison
@@ -178,9 +193,9 @@ if len(ticker_list) >= 2:
     bars_fig_1 = make_subplots(rows=1, cols=2, 
         subplot_titles=("Percent change ", "Closing price"))
     bars_fig_2 = make_subplots(rows=1, cols=2, 
-        subplot_titles=("P/E Ratio", "Debt to Equity"))
+        subplot_titles=("Price to Earnings", "Price to Sales"))
     bars_fig_3 = make_subplots(rows=1, cols=2, 
-        subplot_titles=("Return on Equity", "Book Value"))
+        subplot_titles=("Return on Equity", "Debt to Equity"))
     bars_fig_1.add_trace(go.Bar(
         x= change_df['ticker'],
         y= change_df['percent_change'], 
@@ -193,29 +208,25 @@ if len(ticker_list) >= 2:
         marker_color= change_df['color_prcnt'],
         text= change_df['close_price']),
         row= 1, col= 2)
-
     bars_fig_2.add_trace(go.Bar(
         x= change_df['ticker'],
         y= change_df['pe_ratio'], 
         text= change_df['pe_ratio']),
         row= 1, col= 1)
-
     bars_fig_2.add_trace(go.Bar(
         x= change_df['ticker'],
-        y= change_df['de'], 
-        text= change_df['de']),
+        y= change_df['ps'], 
+        text= change_df['ps']),
         row= 1, col= 2)
-
     bars_fig_3.add_trace(go.Bar(
         x= change_df['ticker'],
         y= change_df['roe'], 
         text= change_df['roe']),
         row= 1, col= 1)
-
     bars_fig_3.add_trace(go.Bar(
         x= change_df['ticker'],
-        y= change_df['bv'], 
-        text= change_df['bv']),
+        y= change_df['de'], 
+        text= change_df['de']),
         row= 1, col= 2)
 
     bars_fig_1.update_yaxes(ticksuffix="%", row=1, col=1)
@@ -228,8 +239,15 @@ if len(ticker_list) >= 2:
         line_dash='dash', 
         annotation_text=pe_mean,
         row=1, col=1)
+    ps_mean = round(change_df['ps'].mean(), 2)
+    bars_fig_2.add_hline(
+        y= ps_mean, 
+        line_dash='dash', 
+        annotation_text=ps_mean,
+        row=1, col=2)
 
-    bars_fig_1.update_layout(title_text=f"{ticker_names} stock comparison over {time_period}")
+
+    bars_fig_1.update_layout(title_text=f"{ticker_names} stock comparison {title_str}")
     bars_fig_1.update_layout(showlegend=False)
     bars_fig_2.update_layout(showlegend=False)
     bars_fig_3.update_layout(showlegend=False)
@@ -239,7 +257,6 @@ if len(ticker_list) >= 2:
     bars_fig_1.write_html(f"{graph_cwd_timestamp}\\bar_fig_1.html")
     bars_fig_2.write_html(f"{graph_cwd_timestamp}\\bar_fig_2.html")
     bars_fig_3.write_html(f"{graph_cwd_timestamp}\\bar_fig_3.html")
-
 
 
     #creates a new HTML file to run all individual graphs on one page
