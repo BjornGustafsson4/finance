@@ -76,6 +76,17 @@ for ticker in ticker_list:
     stock_df['sma_l'] = stock_df['Close'].rolling(smal_roll).mean()
 
 
+    #On Balance Volume
+    stock_df['obv_change'] = np.where(stock_df['Close'] > stock_df['Close'].shift(1), "+", "-")
+    stock_df['obv'] = stock_df['Volume'][0]
+    for index in stock_df['obv_change'].index[1:]:
+        if stock_df['obv_change'][index] == '+':
+            stock_df['obv'][index] = stock_df['obv'][index - 1] + stock_df['Volume'][index]
+        elif stock_df['obv_change'][index] == '-':
+            stock_df['obv'][index] = stock_df['obv'][index - 1] - stock_df['Volume'][index]
+    
+
+
     candlestick = go.Candlestick(
         x=stock_df['Datetime'],
         open=stock_df['Open'],
@@ -88,6 +99,12 @@ for ticker in ticker_list:
         y=stock_df['Volume'],
         name="Volume" ,
         marker={'color': 'rgba(169,169,169,0.5)'})
+    obv = go.Scatter(
+        x= stock_df['Datetime'], 
+        y=stock_df['obv'],
+        name="On Balance Volume" ,
+        marker={'color': 'rgb(84,84,84)'},
+        visible='legendonly')
     high_line = go.Scatter(
         x= stock_df['Datetime'], 
         y= stock_df['High'],
@@ -124,6 +141,7 @@ for ticker in ticker_list:
     candle_fig.add_trace(smas_fig, secondary_y=False)
     candle_fig.add_trace(smal_fig, secondary_y=False)
     candle_fig.add_trace(volume_bar, secondary_y=True)
+    candle_fig.add_trace(obv, secondary_y=True)
     if time_interval != '1d':
         candle_fig.update_xaxes(
             rangebreaks=[
@@ -179,7 +197,6 @@ if time_period != '1d':
     title_str = f"from {str(stock_df['Datetime'].iloc[0]).split(' ', 1)[0]} to {str(stock_df['Datetime'].iloc[-1]).split(' ', 1)[0]}"
 else:
     title_str = f"on {str(stock_df['Datetime'].iloc[0]).split(' ', 1)[0]} from {str(stock_df['Datetime'].iloc[0]).split(' ', 1)[1].split('-')[0]} to {str(stock_df['Datetime'].iloc[-1]).split(' ', 1)[1].split('-')[0]}"
-print(title_str)
 
 
 #Add new stuff here for stock comparison
