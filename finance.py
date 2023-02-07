@@ -12,13 +12,13 @@ csv_only = False
 
 #User input data and valitization
 while True:
-    tickers = input("Please enter a Stock ticker: ")
-    ticker_list = tickers.split()
+    #Fix this grammar
+    tickers = input("Please enter !!!FIGURE OUT!!! Stock ticker: ")
+    ticker_list = tickers.split() #split on other things? comma, space, comma+space
     time_period = input("See history of the stock: 1d, 5d, 1mo, 3mo, 6mo, ytd, 2y, 5y, max: ")
-    time_period = ''.join(e for e in time_period if e.isalnum())
+    time_period = ''.join(e for e in time_period if e.isalnum()) #Data injest in different module and add custom error for when a ticker doesn't come back
     #save = input("Do you want to save your graphs? (y/n): ")
-    smal_roll= 30
-    if time_period.lower() == "1d": 
+    if time_period.lower() == "1d":
         time_interval ='1m'
     elif time_period == '5d':
         time_interval = '15m'
@@ -48,7 +48,7 @@ else:
 
 change_df = pd.DataFrame(columns= ["ticker", "start_date", "end_date", "percent_change"])
 for ticker in ticker_list:
-    if csv_only == False:
+    if not csv_only:
         stock_df= yf.download(tickers= ticker, period= time_period, interval= time_interval)
         stock_df.reset_index(inplace= True)
         if 'Date' in stock_df.columns:
@@ -73,7 +73,7 @@ for ticker in ticker_list:
 
     #Simple Moving Average
     stock_df['sma_s'] = stock_df['Close'].rolling(5).mean()
-    stock_df['sma_l'] = stock_df['Close'].rolling(smal_roll).mean()
+    stock_df['sma_l'] = stock_df['Close'].rolling(30).mean()
 
 
     #On Balance Volume
@@ -123,7 +123,7 @@ for ticker in ticker_list:
     y= stock_df['sma_s'],
     mode= 'lines',
     name= 'Simple Moving Average Short',
-    marker= {'color': 'lightskyblue'}
+    marker= {'color': 'lightseagreen'}
     )
     #SMA long
     smal_fig = go.Scatter(
@@ -189,7 +189,6 @@ for ticker in ticker_list:
             'roe': (round(tick_info['returnOnEquity'], 2) * 100)}])
         change_df = pd.concat([change_df, change_lst])
         change_df['color_prcnt']= np.where(change_df["percent_change"]<0, 'red', 'green')
-        #change_df['color_doe']= np.where(change_df["de"]<)
         change_df.to_csv(f"{graph_cwd_timestamp}\\change.csv")
 
 
@@ -201,7 +200,7 @@ else:
 
 #Add new stuff here for stock comparison
 if csv_only == True:
-    filename = f"{cwd}\\change.csv"
+    filename = f"{cwd}\\change.csv"   
     change_df = pd.read_csv(filename)
 if len(ticker_list) >= 2:
     ticker_names= ""
