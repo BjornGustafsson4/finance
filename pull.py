@@ -12,8 +12,7 @@ def stock_info(ticker):
     tick_info = yf.Ticker(ticker).info
     return tick_info
 
-def local_data(ticker, cwd_location):
-    filename = f"{cwd_location}\\{ticker}.csv"
-    data_df = pd.read_csv(filename)
+def local_data(ticker_location):
+    data_df = pd.read_csv(ticker_location)
     return data_df
 #Make this into local data pull from cwd graphs, have input here for entering location
