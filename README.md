@@ -8,7 +8,7 @@ Stock Analysis also saves all pulled data in timestamped folders in a folder cal
 
 
 Future updates:
-    - Modularize program (in progress)
-    - Complete offline data reading
+    -- Modularize program
+    -- Complete offline data reading
     - Add XG Boost Classifer model to help predict future movement
     - Add a UI
