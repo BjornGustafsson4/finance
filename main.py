@@ -48,8 +48,6 @@ if not csv_only:
         else: 
             time_interval= '1d'
         if time_period.lower() in ("1d 5d 1mo 3mo 6mo ytd 2y 5y max"):
-            break
-        else:
             #Creates files to save data and graphs
             graph_cwd_timestamp = f"{graph_cwd}\\{timestamp}"
             if os.path.exists(graph_cwd) == False:
@@ -59,6 +57,8 @@ if not csv_only:
             else:
                 if os.path.exists(graph_cwd_timestamp) == False:
                     os.mkdir(graph_cwd_timestamp)
+            break
+        else:
             continue
 
 
