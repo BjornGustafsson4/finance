@@ -8,11 +8,12 @@ def stock(ticker, time_period, time_interval):
         stock_df= stock_df.rename(columns={'Date':'Datetime'})
     return stock_df
     
-def stock_info(ticker):
-    tick_info = yf.Ticker(ticker).info
-    return tick_info
 
 def local_data(ticker_location):
     data_df = pd.read_csv(ticker_location)
     return data_df
-#Make this into local data pull from cwd graphs, have input here for entering location
+
+    
+def stock_info(ticker):
+    tick_info = yf.Ticker(ticker).info
+    return tick_info
