@@ -24,6 +24,7 @@ def read_csv(graph_cwd):
             break
         elif csv_only.lower() in ["no", "n", "false"]:
             csv_only = False
+            cwd_location = graph_cwd
             return csv_only, cwd_location
         else:
             continue
