@@ -31,9 +31,7 @@ else:
         stock_df = pull.stock(ticker, time_period, time_interval)
         change_prcnt = candle_graph.candle_graph(stock_df, time_interval, ticker)
         stock_df.to_csv(f"{graph_cwd_timestamp}\\{ticker}_{time_interval}.csv")
-    #These functions don't work at the moment since Yahoo Finance updated background decryption
-    if len(ticker_list) >= 2:
-        for ticker in ticker_list:
+        if len(ticker_list) >= 2:
             tick_info = pull.stock_info(ticker)
             change_df, title_str = main_func.change(ticker, change_prcnt, stock_df, tick_info, change_df, time_period)
-            compare.compare(change_df, ticker_list, title_str, graph_cwd_timestamp)
+compare.compare(change_df, ticker_list, title_str, graph_cwd_timestamp)
