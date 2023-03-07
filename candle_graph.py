@@ -2,6 +2,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+
 def candle_graph(stock_df, time_interval, ticker):
     open_v = stock_df['Open'].iloc[0] #Change to first instance of today open, NOT first instance in data (this way we can see historical data vs today)
     last_v = stock_df['High'].iloc[-1]

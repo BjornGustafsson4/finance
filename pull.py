@@ -1,6 +1,7 @@
 import pandas as pd
 import yfinance as yf
 
+
 def stock(ticker, time_period, time_interval):
     stock_df= yf.download(tickers= ticker, period= time_period, interval= time_interval)
     stock_df.reset_index(inplace= True)
