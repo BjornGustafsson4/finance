@@ -1,0 +1,11 @@
+# created by virtualenv automatically
+
+*.env
+
+*.txt
+
+finance.py
+
+*/
+
+!/example
